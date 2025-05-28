@@ -19,21 +19,25 @@ SPECIAL=""
 
 semverParseInto $(pacman -Q jellyfin-server | sed "s/jellyfin-server //") MAJOR MINOR PATCH SPECIAL
 
+echo "Installed Jellyfin backend version: $MAJOR.$MINOR"
+
 PROJDIR=$PWD
+INSTALL="/usr/share/jellyfin"
 
 echo "Project dir: $PROJDIR"
+echo "Installing to: $INSTALL"
 
 cd "$PROJDIR/jellyfin-web" || exit
-
-echo "Jellyfin version: $MAJOR.$MINOR.z"
-
 git checkout "release-$MAJOR.$MINOR.z" || exit
 git reset origin/"release-$MAJOR.$MINOR.z" --hard || exit
 git apply --verbose "$PROJDIR/patches"/* || exit
 
-npm install || exit
-npm run build:production || exit
+rm -f "package-lock.json" || exit
+bun install || exit
+bun run build:production || exit
 
-mkdir -p /usr/share/jellyfin || exit
-rm -rf /usr/share/jellyfin/web || exit
-mv dist /usr/share/jellyfin/web || exit
+mkdir -p $INSTALL || exit
+rm -rf $INSTALL/web || exit
+mv dist $INSTALL/web || exit
+
+echo "Successfully installed to $INSTALL."
